@@ -182,20 +182,37 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true;
 }
 
-const int borderLEDstart = 66;
+const int borderLEDstart = 67;
 const int borderLEDend   = 105;
 const int borderLEDcount = borderLEDend - borderLEDstart;
+const int colorCycleTime        = 10000;
+int  colortimer = 0;
+bool      capslockscrollstarted = false;
+
 void set_layer_color(int layer)
 {
     int rgbCount = 0;
+    
     for (int i = 0; i < DRIVER_LED_TOTAL; i++)
     {
-        if ( i > borderLEDstart && host_keyboard_led_state().caps_lock)
+        if (i > borderLEDstart && i <= borderLEDend &&
+            host_keyboard_led_state().caps_lock)
         {
+            if(!capslockscrollstarted)
+            {
+                colortimer = timer_read32();
+                capslockscrollstarted = true;
+            }
+            
             rgbCount += 1;
-            float rgbProgress = rgbCount / borderLEDcount;
+            float rgbProgress   = (float)rgbCount / (float)borderLEDcount;
+            float timerCycle    = (timer_elapsed32(colortimer) % colorCycleTime) / (float)colorCycleTime;
+            uint8_t timerOffset = (uint8_t)((float)timerCycle * 255.f);
+            float hueScaled     = rgbProgress * 255.f;
+            uint8_t hue         = ((uint8_t)hueScaled + timerOffset) % 255;
+
             HSV hsv = {
-                .h = rgbProgress * 255,
+                .h = hue,
                 .s = 255,
                 .v = 255,
             };
