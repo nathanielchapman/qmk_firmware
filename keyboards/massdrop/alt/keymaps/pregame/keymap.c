@@ -181,18 +181,31 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
     return true;
 }
-void set_layer_color(int layer) {
-    for (int i = 0; i < DRIVER_LED_TOTAL; i++) {
-        HSV hsv = {
-            .h = pgm_read_byte(&ledmap[layer][i][0]),
-            .s = pgm_read_byte(&ledmap[layer][i][1]),
-            .v = pgm_read_byte(&ledmap[layer][i][2]),
-        };
-        if (hsv.h || hsv.s || hsv.v) {
-            RGB rgb = hsv_to_rgb(hsv);
-            float f = (float)rgb_matrix_config.hsv.v / UINT8_MAX;
+
+const int borderLEDstart = 66;
+const int borderLEDend   = 105;
+const int borderLEDcount = borderLEDend - borderLEDstart;
+void set_layer_color(int layer)
+{
+    int rgbCount = 0;
+    for (int i = 0; i < DRIVER_LED_TOTAL; i++)
+    {
+        if ( i > borderLEDstart && host_keyboard_led_state().caps_lock)
+        {
+            rgbCount += 1;
+            float rgbProgress = rgbCount / borderLEDcount;
+            HSV hsv = {
+                .h = rgbProgress * 255,
+                .s = 255,
+                .v = 255,
+            };
+            RGB   rgb = hsv_to_rgb(hsv);
+            float f   = (float)rgb_matrix_config.hsv.v / UINT8_MAX;
             rgb_matrix_set_color(i, f * rgb.r, f * rgb.g, f * rgb.b);
-        } else if (layer == 1) {
+        }
+
+        else
+        {
             // Only deactivate non-defined key LEDs at layers other than FN. Because at FN we have RGB adjustments and need to see them live.
             // If the values are all false then it's a transparent key and deactivate LED at this layer
             rgb_matrix_set_color(i, 0, 0, 0);
