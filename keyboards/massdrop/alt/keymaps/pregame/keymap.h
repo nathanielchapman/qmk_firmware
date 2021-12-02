@@ -43,7 +43,6 @@
 
 
 //========================================================== CONFIGURABLE DEFAULTS ==========================================================
-extern bool g_suspend_state;
 extern rgb_config_t rgb_matrix_config;
 bool disable_layer_color;
 
